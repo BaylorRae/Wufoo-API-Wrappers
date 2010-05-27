@@ -34,6 +34,11 @@ class WufooApiExamples {
 		return $wrapper->getEntries($identifier); 
 	}
 	
+	public function getEntryCount($identifier) {
+		$wrapper = new WufooApiWrapper($this->apiKey, $this->subdomain, $this->domain);
+		return $wrapper->getEntryCount($identifier);
+	}
+	
 	public function getUsers() {
 		$wrapper = new WufooApiWrapper($this->apiKey, $this->subdomain, $this->domain);
 		return $wrapper->getUsers(); 
@@ -57,6 +62,11 @@ class WufooApiExamples {
 	public function getReportEntries($identifier) {
 		$wrapper = new WufooApiWrapper($this->apiKey, $this->subdomain, $this->domain);
 		return $wrapper->getReportEntries($identifier); 
+	}
+	
+	public function getReportEntryCount($identifier) {
+		$wrapper = new WufooApiWrapper($this->apiKey, $this->subdomain, $this->domain);
+		return $wrapper->getReportEntryCount($identifier);
 	}
 
 }

@@ -59,11 +59,24 @@ class WufooCurl {
 	}
 	
 	private function checkForGetErrors($response) {
-		if ($this->ResultStatus['http_code'] != 200) {
-			if ($response) {
-				$obj = json_decode($response);
-				throw new WufooException('('.$obj->HTTPCode.') '.$obj->Text, $this->ResultStatus['HTTP_CODE']);
-			}
+		switch ($this->ResultStatus['http_code']) {
+			case 200:
+				//ignore, this is good.
+				break;
+			case 401:
+				throw new WufooException('(400) Nope... You\'re Unauthorized.  Check your API Key and subdomain.', 400);
+				break;
+			case 500:
+				throw new WufooException('(500) Bad request.  Check your identifier.', 500);
+				break;
+			default:
+				if ($response) {
+					$obj = json_decode($response);
+					throw new WufooException('('.$obj->HTTPCode.') '.$obj->Text, $this->ResultStatus['HTTP_CODE']);
+				} else {
+					throw new WufooException('(500) This is embarrassing... We did not anticipate this error type.  Please contact support here: support@wufoo.com', 500);
+				}
+				break;
 		}
 	}
 	

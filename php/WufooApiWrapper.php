@@ -85,15 +85,30 @@ class WufooApiWrapper extends WufooApiWrapperBase {
 	/**
 	 * Gets all entries from a given form or report by url or hash.  Remember, the URL changes with the form/report title, so it's best to use the hash.
 	 *
-	 * @param string $formIdentifier a URL or Hash
+	 * @param string $identifier a URL or Hash
 	 * @param string $from can be left as 'forms'.  The call getReportFields uses this parameter.
 	 * @return array of Form/Report Value Objects by hash.
 	 * @author Timothy S Sabat
 	 */
-	public function getEntries($formIdentifier, $from = 'forms') {
-		$url = $this->getFullUrl($from.'/'.$formIdentifier.'/entries');
+	public function getEntries($identifier, $from = 'forms') {
+		$url = $this->getFullUrl($from.'/'.$identifier.'/entries');
 		return $this->getHelper($url, 'Entry', 'Entries', 'EntryId');
 	}
+	
+	/**
+	 * Gets entry count for a given form or report by url or hash.  Remember, the URL changes with the form/report title, so it's best to use the hash.
+	 *
+	 * @param string $identifier a URL or Hash
+	 * @param string $from can be left as 'forms'.  The call getReportFields uses this parameter.
+	 * @return int entry count
+	 * @author Timothy S Sabat
+	 */
+	public function getEntryCount($identifier, $from = 'forms') {
+		$url = $this->getFullUrl($from.'/'.$identifier.'/entries/count');
+		$this->curl = new WufooCurl();
+		$countObject = json_decode($this->curl->getAuthenticated($url, $this->apiKey));
+		return $countObject->EntryCount;
+	} 
 	
 	/**
 	 * Gets all reports permitted to user.
@@ -139,6 +154,17 @@ class WufooApiWrapper extends WufooApiWrapperBase {
 	 */
 	public function getReportEntries($reportIdentifier) {
 		return $this->getEntries($reportIdentifier, 'reports');
+	}
+	
+	/**
+	 * Gets entry count for a given report by url or hash.  Notice this is a facade for getEntryCount.
+	 *
+	 * @param string $reportIdentifier can be the url or hash.  Remember, the URL changes with the report title, so it's best to use the hash.
+	 * @return array of Entry Value Objects by EntryId.
+	 * @author Timothy S Sabat
+	 */
+	public function getReportEntryCount($reportIdentifier) {
+		return $this->getEntryCount($reportIdentifier, 'reports');
 	}
 	
 }
