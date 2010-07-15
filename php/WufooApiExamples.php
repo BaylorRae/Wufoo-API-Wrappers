@@ -68,6 +68,11 @@ class WufooApiExamples {
 		$wrapper = new WufooApiWrapper($this->apiKey, $this->subdomain, $this->domain);
 		return $wrapper->getReportEntryCount($identifier);
 	}
+	
+	public function getComments($identifier) {
+		$wrapper = new WufooApiWrapper($this->apiKey, $this->subdomain, $this->domain);
+		return $wrapper->getComments($identifier);
+	}
 
 }
 

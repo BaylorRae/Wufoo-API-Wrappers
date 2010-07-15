@@ -167,6 +167,39 @@ class WufooApiWrapper extends WufooApiWrapperBase {
 		return $this->getEntryCount($reportIdentifier, 'reports');
 	}
 	
+	/**
+	 * Gets comments for a given form and (optionally) entry.	
+	 *
+	 * @param string $formIdentifier 
+	 * @param string $entryId (optional).  If provided, narrows the filter to the entry id.
+	 * @return array of Comment Value Objects by EntryId
+	 * @author Timothy S Sabat
+	 */
+	public function getComments($formIdentifier, $entryId = null) {
+		if ($entryId) {
+			$url = $this->getFullUrl('forms/'.$formIdentifier.'/comments/'.$entryId);
+		} else {
+			$url = $this->getFullUrl('forms/'.$formIdentifier.'/comments');
+		}
+		return $this->getHelper($url, 'Comment', 'Comments', 'CommentId');
+	}
+	
+	public function entryPost($formIdentifier, $wufooSubmitFields) {
+		$url = $this->getFullUrl('forms/'.$formIdentifier.'/entries');
+		$postParams = array();
+		foreach ($wufooSubmitFields as $field) {
+			$postParams[$field->getId()] = $field->getValue();
+		}
+		$curl = new WufooCurl();
+		$response = $curl->postAuthenticated($postParams, $url, $this->apiKey);
+		return new PostResponse($response);
+	}
+	
+	public function login($email, $password, $integrationKey, $subdomain = '') {
+		$args = implode(func_get_args(), '&');
+		$url = 'http://wufoo.com/api/v3/login/';
+		
+	}
 }
 
 ?>
