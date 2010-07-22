@@ -104,7 +104,7 @@
         options = prepare_options(options);
         
         var url = "forms/" + options.formHash + "/comments";
-        url = url + (options.getCommentCount === "" ? '.json' : '/count.json');
+        url = url + (options.getCommentCount ? '/count.json' : '.json');
         
         get(url, options);
       },
@@ -113,7 +113,7 @@
         options = prepare_options(options);
         
         var url = options.reportHash === "" ? 'forms' : 'reports';
-        url = url + "/" + options.formHash + "/entries.json";
+        url = url + "/" + options.reportHash + "/entries.json";
         
         get(url, options);
       },
@@ -121,7 +121,7 @@
       getFields: function (options) {
         options = prepare_options(options);
         
-        var url = options.reportHash === "" ? 'forms' : 'reports';
+        var url = options.formHash === "" ? 'forms' : 'reports';
         url = url + "/" + options.formHash + "/fields.json";
         
         get(url, options);
