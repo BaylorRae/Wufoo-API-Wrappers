@@ -1,12 +1,75 @@
-(function($) {
-  
-    var requestURL = "";
-  
-    $.wufooAPI = function(options) {
-        // doesn't do anything by itself
+(function ($) {
+
+  $.wufooAPI = (function () {
+    // Private
+    
+    var base_url = "api/v3/",
+    
+    prepare_options = function (options) {
+      return $.extend({}, $.wufooAPI.defaultOptions, options);
+    },
+    
+    parameters = function (options) {
+      var params = {};
+
+      if (options.entryID !== "") {
+        params.entryId = options.entryID;
+      }
+
+      if (options.sortDirection !== "") {
+        params.sort = options.sortID;
+        params.sortDirection = options.sortDirection;
+      }
+
+      if (options.page !== "") {
+        params.pageStart = options.page[0];
+        params.pageSize  = options.page[1];
+      }
+
+      if (options.filter.length) {
+        $.each(options.filter, function (index, values) {
+          params["Filter" + (index + 1)] = values.join(' ');
+        });
+      }
+
+      if (options.system !== "") {
+        params.system = options.system;
+      }
+      
+      return $.param(params);
+    },
+    
+    get = function (url, options) {
+      
+      var params = parameters(options);
+      
+      url = base_url + url; // Add base prefix
+      
+      if (params.length) {
+        url = [url, params].join('?'); // Add parameters if present
+      }
+      
+      $.get(options.getterPath + 'getter.php', {url: url}, function (data) {
+        if (!data) {
+          // Wufoo will probably never do this to you
+          window.alert("No response!");
+          return;
+        }
+        
+        try {
+          options.callback(jQuery.parseJSON(data));
+        } catch (e) {
+          window.alert("Uh oh, error! The information in the config.php file is probably wrong." + e);
+          return;
+        }
+        
+      }, "text");
     };
     
-    $.wufooAPI.defaultOptions = {
+    // Public
+    
+    return {
+      defaultOptions: {
         formHash: "",                    // Hash of form - Forms tab, Code button, API Information button
         reportHash: "",                  // Hash of report (KIND OF HARD TO FIND)
         entryID: "",                     // When using an API that needs to refernce a specific entry
@@ -18,146 +81,59 @@
         callback: $.noop(),              // ALWAYS REQUIRED - function to process data object
         system: false,                   // Return system information, e.g. IP addresses
         getterPath: ""                   // Path to file getter.php (relative to location of file calling this plugin)
-    };
-    
-    function wufooInit() {
-      requestURL = "api/v3/";
-    }
-    
-    function addExtraParameters(options) {
+      },
       
-      var firstParam = true;
-            
-      if (options.entryID != "") {
-        if (firstParam) { requestURL += "?"; firstParam = false; } else { requestURL += "&" }
-        requestURL += "entryId=" + options.entryID;
-      }
+      getUsers: function (options) {
+        options = prepare_options(options);
+        get('users.json', options);
+      },
       
-      if (options.sortDirection != "") {
-        if (firstParam) { requestURL += "?"; firstParam = false; } else { requestURL += "&" }
-        requestURL += "sort=" + options.sortID + "&sortDirection=" + options.sortDirection;
-      }
+      getReports: function (options) {
+        options = prepare_options(options);
+        var url = options.reportHash ? "reports/" + options.reportHash + ".json" : 'reports.json';
+        
+        get(url, options);
+      },
       
-      if (options.page != "") {
-        if (firstParam) { requestURL += "?"; firstParam = false; } else { requestURL += "&" }
-        requestURL += "pageStart=" + options.page[0] + "&pageSize=" + options.page[1];
-      }
+      getWidgets: function (options) {
+        options = prepare_options(options);
+        get("reports/" + options.reportHash + "/widgets.json", options);
+      },
       
-      if (options.filter != "") {
-        $.each(options.filter, function(index, values) {
-            if (firstParam) { requestURL += "?"; firstParam = false; } else { requestURL += "&" }
-            requestURL += "Filter" + (index+1) + "=" + values[0] + "+" + values[1] + "+" + values[2];
-        });
-      }
+      getComments: function (options) {
+        options = prepare_options(options);
+        
+        var url = "forms/" + options.formHash + "/comments";
+        url = url + (options.getCommentCount === "" ? '.json' : '/count.json');
+        
+        get(url, options);
+      },
       
-      if (options.system != "") {
-        if (firstParam) { requestURL += "?"; firstParam = false; } else { requestURL += "&" }
-        requestURL += "system=" + options.system;
-      }
-                  
-    }
-    
-    function makeRequest(passedURL, callback, getterPath) {
+      getEntries: function (options) {
+        options = prepare_options(options);
+        
+        var url = options.reportHash === "" ? 'forms' : 'reports';
+        url = url + "/" + options.formHash + "/entries.json";
+        
+        get(url, options);
+      },
       
-      $.get(getterPath + 'getter.php', {url: passedURL}, function (data) {
-        if ( !data || data === "") {
-          // Wufoo will probably never do this to you
-          alert ("No response!");
-          return;
-        }
-        var json;
-        try {
-          json = jQuery.parseJSON(data);
-        } catch (e) {
-          alert ("Uh oh, error! The information in the config.php file is probably wrong." + e);
-          return;
-        }
-        callback(json);
-      }, "text");
+      getFields: function (options) {
+        options = prepare_options(options);
+        
+        var url = options.reportHash === "" ? 'forms' : 'reports';
+        url = url + "/" + options.formHash + "/fields.json";
+        
+        get(url, options);
+      },
       
-    };
-    
-    $.wufooAPI.getUsers = function(options) {
-      wufooInit(); 
-      localOptions = $.extend({},$.wufooAPI.defaultOptions, options);
-      requestURL += "users.json";
-      addExtraParameters(localOptions);
-      makeRequest(requestURL, localOptions.callback, localOptions.getterPath);
-    };
-    
-    $.wufooAPI.getReports = function(options) {
-      wufooInit(); 
-      localOptions = $.extend({},$.wufooAPI.defaultOptions, options);
-      if (localOptions.reportHash == "") {
-        requestURL += "reports.json";
-      } else {
-        requestURL += "reports/" + localOptions.reportHash + ".json";
+      getForms: function (options) {
+        options = prepare_options(options);
+        var url = options.formHash === "" ? "forms.json" : "forms/" + options.formHash + ".json";
+        
+        get(url, options);
       }
-      addExtraParameters(localOptions);
-      makeRequest(requestURL, localOptions.callback, localOptions.getterPath);
     };
+  }());
     
-    $.wufooAPI.getWidgets = function(options) {
-      wufooInit(); 
-      localOptions = $.extend({},$.wufooAPI.defaultOptions, options);
-      requestURL += "reports/" + localOptions.reportHash + "/widgets.json";
-      addExtraParameters(localOptions);
-      makeRequest(requestURL, localOptions.callback, localOptions.getterPath);   
-    };
-    
-    $.wufooAPI.getComments = function(options) {   
-      wufooInit(); 
-      localOptions = $.extend({},$.wufooAPI.defaultOptions, options);
-      if (localOptions.getCommentCount == "") {
-        requestURL += "forms/" + localOptions.formHash + "/comments.json";
-      } else {
-        requestURL += "forms/" + localOptions.formHash + "/comments/count.json";
-      }
-      addExtraParameters(localOptions);
-      makeRequest(requestURL, localOptions.callback, localOptions.getterPath);
-    };
-      
-    $.wufooAPI.getEntries = function(options) {     
-      wufooInit(); 
-      localOptions = $.extend({},$.wufooAPI.defaultOptions, options);
-      if (localOptions.reportHash == "") {
-        requestURL += "forms/" + localOptions.formHash + "/entries.json";
-      } else {
-        requestURL += "reports/" + localOptions.reportHash + "/entries.json";
-      }
-      addExtraParameters(localOptions);
-      makeRequest(requestURL, localOptions.callback, localOptions.getterPath);        
-    };
-    
-    $.wufooAPI.getFields = function(options) {      
-      wufooInit(); 
-      localOptions = $.extend({},$.wufooAPI.defaultOptions, options);
-      if (localOptions.reportHash == "") {
-        requestURL += "forms/" + localOptions.formHash + "/fields.json";
-      } else {
-        requestURL += "reports/" + localOptions.reportHash + "/fields.json";
-      }
-      addExtraParameters(localOptions);
-      makeRequest(requestURL, localOptions.callback, localOptions.getterPath);        
-    };
-    
-    $.wufooAPI.getForms = function(options) {      
-      wufooInit(); 
-      localOptions = $.extend({},$.wufooAPI.defaultOptions, options);
-      if (localOptions.formHash == "") {
-        requestURL += "forms.json";
-      } else {
-        requestURL += "forms/" + localOptions.formHash + ".json";
-      }
-      addExtraParameters(localOptions);
-      makeRequest(requestURL, localOptions.callback, localOptions.getterPath);        
-    };
-    
-    $.fn.wufooAPI = function(options) {
-        // maintains the chain, even though it'll probably never be called like that.
-        return this.each(function(){
-            (new $.wufooAPI(options));
-        });
-    };
-    
-})(jQuery);
+}(jQuery));
