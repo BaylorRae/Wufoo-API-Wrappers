@@ -5,8 +5,20 @@
     
     var base_url = "api/v3/",
     
-    prepare_options = function (options) {
-      return $.extend({}, $.wufooAPI.defaultOptions, options);
+    prepare_options = function (options, callback) {
+      // If only callback is passed
+      if ($.isFunction(options)) {
+        options = {callback: options};
+      }
+      
+      options = $.extend({}, $.wufooAPI.defaultOptions, options);
+      
+      // If both options and callback are passed in
+      if ($.isFunction(callback)) {
+        options.callback = callback;
+      }
+      
+      return options;
     },
     
     parameters = function (options) {
@@ -52,17 +64,15 @@
       $.get(options.getterPath + 'getter.php', {url: url}, function (data) {
         if (!data) {
           // Wufoo will probably never do this to you
-          window.alert("No response!");
+          options.callback(false, $.wufooAPI.errors.NoDataError);
           return;
         }
         
         try {
           options.callback(jQuery.parseJSON(data));
         } catch (e) {
-          window.alert("Uh oh, error! The information in the config.php file is probably wrong." + e);
-          return;
+          options.callback(false, new $.wufooAPI.errors.InvalidJSON(e));
         }
-        
       }, "text");
     };
     
@@ -83,25 +93,35 @@
         getterPath: ""                   // Path to file getter.php (relative to location of file calling this plugin)
       },
       
-      getUsers: function (options) {
-        options = prepare_options(options);
+      errors: {
+        NoDataError: { type: 'NoDataError', message: "No data was supplied to the callback. Something is wrong!"},
+        InvalidJSON: function (data) {
+          return {
+            type: 'InvalidJSON',
+            message: "The information in the config file is probably wrong. The request returned invalid JSON: \n" + data
+          };
+        }
+      },
+      
+      getUsers: function (options, callback) {
+        options = prepare_options(options, callback);
         get('users.json', options);
       },
       
-      getReports: function (options) {
-        options = prepare_options(options);
+      getReports: function (options, callback) {
+        options = prepare_options(options, callback);
         var url = options.reportHash ? "reports/" + options.reportHash + ".json" : 'reports.json';
         
         get(url, options);
       },
       
-      getWidgets: function (options) {
-        options = prepare_options(options);
+      getWidgets: function (options, callback) {
+        options = prepare_options(options, callback);
         get("reports/" + options.reportHash + "/widgets.json", options);
       },
       
-      getComments: function (options) {
-        options = prepare_options(options);
+      getComments: function (options, callback) {
+        options = prepare_options(options, callback);
         
         var url = "forms/" + options.formHash + "/comments";
         url = url + (options.getCommentCount ? '/count.json' : '.json');
@@ -109,8 +129,8 @@
         get(url, options);
       },
       
-      getEntries: function (options) {
-        options = prepare_options(options);
+      getEntries: function (options, callback) {
+        options = prepare_options(options, callback);
         
         var url = options.reportHash === "" ? 'forms' : 'reports';
         url = url + "/" + options.reportHash + "/entries.json";
@@ -118,8 +138,8 @@
         get(url, options);
       },
       
-      getFields: function (options) {
-        options = prepare_options(options);
+      getFields: function (options, callback) {
+        options = prepare_options(options, callback);
         
         var url = options.formHash === "" ? 'forms' : 'reports';
         url = url + "/" + options.formHash + "/fields.json";
@@ -127,8 +147,8 @@
         get(url, options);
       },
       
-      getForms: function (options) {
-        options = prepare_options(options);
+      getForms: function (options, callback) {
+        options = prepare_options(options, callback);
         var url = options.formHash === "" ? "forms.json" : "forms/" + options.formHash + ".json";
         
         get(url, options);
