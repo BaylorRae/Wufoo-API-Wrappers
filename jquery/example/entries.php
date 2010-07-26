@@ -37,17 +37,38 @@
         });
       };
             
+      $.wufooAPI.getEntries({
+        "callback"   : processEntries,
+        "formHash"   : "w7x1p5",
+        "getterPath" : "../"
+        
+        // FILTER EXAMPLE
+        // ,
+        // "filter"     : [ 
+        //   [ "EntryId", "Is_before", "200"],
+        //   [ "Field6", "Does_not_contain", "harpoon"]
+        // ]
+        // ,
+        // "match"      : "OR"
+        
+        // PAGING EXAMPLE
+        // ,
+        // "page"      : [2, 10] 
+        
+        // SORTING EXAMPLE
+        // ,
+        // "sortID"         : "EntryID",
+        // "sortDirection"  : "DESC"
+      });
+      
+      
+      // Report Example
+      
       // $.wufooAPI.getEntries({
       //   "callback" : processEntries,
-      //   "formHash" : "w7x1p5",
+      //   "reportHash" : "m5p7k0",
       //   "getterPath": "../"
       // });
-      
-      $.wufooAPI.getEntries({
-        "callback" : processEntries,
-        "reportHash" : "m5p7k0",
-        "getterPath": "../"
-      });
                   			
     });
 

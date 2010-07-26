@@ -42,6 +42,7 @@
         $.each(options.filter, function (index, values) {
           params["Filter" + (index + 1)] = values.join(' ');
         });
+        if (options.match) params["match"] = options.match;
       }
 
       if (options.system !== "") {
@@ -85,9 +86,10 @@
         entryID: "",                     // When using an API that needs to refernce a specific entry
         getCommentCount: false,          // TRUE will return comment count when using Comments function / API
         filter: "",                      // Array of arrays. [ ["", "", ""], ["", "", ""] ]
+        match: "AND",                    // For filtering, determine if multiple filters should be AND or OR logic-ized
         page: "",                        // Array format, [#, #] = [pageStart, pageSize], [0, 100] = Start at zero, return 100
-        sortID : "",                     //
-        sortDirection: "",               //
+        sortID : "",                     // Which field to sort by e.g. EntryID, field5, etc
+        sortDirection: "",               // Which direction to sort by ASC or DESC
         callback: $.noop(),              // ALWAYS REQUIRED - function to process data object
         system: false,                   // Return system information, e.g. IP addresses
         getterPath: ""                   // Path to file getter.php (relative to location of file calling this plugin)
@@ -132,8 +134,8 @@
       getEntries: function (options, callback) {
         options = prepare_options(options, callback);
         
-        var url = options.reportHash === "" ? 'forms' : 'reports';
-        url = url + "/" + options.reportHash + "/entries.json";
+        var url = options.reportHash === "" ? 'forms/' + options.formHash : 'reports/' + options.reportHash;
+        url = url + "/entries.json";
         
         get(url, options);
       },
