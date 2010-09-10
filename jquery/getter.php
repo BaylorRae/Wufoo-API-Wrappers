@@ -32,6 +32,10 @@ class WufooGetter {
   	if ($resultStatus['http_code'] == 200) {                    
   	    echo $response;
   	} else {
+  	  
+  	    // Some folks may want to encode the error as JSON before 
+  	    // outputting, so the JavaScript gets usable data no matter what.
+  	  
   	    echo 'Call Failed '.print_r($resultStatus);                        
   	}
   	  	
