@@ -87,12 +87,15 @@ class WufooApiWrapper extends WufooApiWrapperBase {
 	 *
 	 * @param string $identifier a URL or Hash
 	 * @param string $from can be left as 'forms'.  The call getReportFields uses this parameter.
-	 * @return array of Form/Report Value Objects by hash.
+	 * @param string $getArgs a URL encoded string to filter entries.
+	 * @param string $index determines the key of the return hash
+	 * @return array of Form/Report Value Objects by hash
 	 * @author Timothy S Sabat
 	 */
-	public function getEntries($identifier, $from = 'forms') {
+	public function getEntries($identifier, $from = 'forms', $getArgs = '', $index = 'EntryId') {
 		$url = $this->getFullUrl($from.'/'.$identifier.'/entries');
-		return $this->getHelper($url, 'Entry', 'Entries', 'EntryId');
+		$url.= ($getArgs) ? '?'.$getArgs : '';
+		return $this->getHelper($url, 'Entry', 'Entries', $index);
 	}
 	
 	/**
@@ -100,11 +103,13 @@ class WufooApiWrapper extends WufooApiWrapperBase {
 	 *
 	 * @param string $identifier a URL or Hash
 	 * @param string $from can be left as 'forms'.  The call getReportFields uses this parameter.
+	 * @param string $getArgs a URL encoded string to filter entries.
 	 * @return int entry count
 	 * @author Timothy S Sabat
 	 */
-	public function getEntryCount($identifier, $from = 'forms') {
+	public function getEntryCount($identifier, $from = 'forms', $getArgs = '') {
 		$url = $this->getFullUrl($from.'/'.$identifier.'/entries/count');
+		$url.= ($getArgs) ? '?'.$getArgs : '';
 		$this->curl = new WufooCurl();
 		$countObject = json_decode($this->curl->getAuthenticated($url, $this->apiKey));
 		return $countObject->EntryCount;
@@ -149,22 +154,24 @@ class WufooApiWrapper extends WufooApiWrapperBase {
 	 * Gets all entries for a given report by url or hash.  Notice this is a facade for getFields() call. 
 	 *
 	 * @param string $reportIdentifier can be the url or hash.  Remember, the URL changes with the report title, so it's best to use the hash.
+	 * @param string $getArgs a URL encoded string to filter entries.
 	 * @return array of Entry Value Objects by EntryId.
 	 * @author Timothy S Sabat
 	 */
-	public function getReportEntries($reportIdentifier) {
-		return $this->getEntries($reportIdentifier, 'reports');
+	public function getReportEntries($reportIdentifier, $getArgs = '') {
+		return $this->getEntries($reportIdentifier, 'reports', $getArgs);
 	}
 	
 	/**
 	 * Gets entry count for a given report by url or hash.  Notice this is a facade for getEntryCount.
 	 *
 	 * @param string $reportIdentifier can be the url or hash.  Remember, the URL changes with the report title, so it's best to use the hash.
+	 * @param string $getArgs a URL encoded string to filter entries.
 	 * @return array of Entry Value Objects by EntryId.
 	 * @author Timothy S Sabat
 	 */
-	public function getReportEntryCount($reportIdentifier) {
-		return $this->getEntryCount($reportIdentifier, 'reports');
+	public function getReportEntryCount($reportIdentifier, $getArgs = '') {
+		return $this->getEntryCount($reportIdentifier, 'reports', $getArgs);
 	}
 	
 	/**
@@ -184,6 +191,14 @@ class WufooApiWrapper extends WufooApiWrapperBase {
 		return $this->getHelper($url, 'Comment', 'Comments', 'CommentId');
 	}
 	
+	/**
+	 * submits an entry to your form
+	 *
+	 * @param string $formIdentifier a URL or Hash
+	 * @param string $wufooSubmitFields an associative array containing array('FieldX' => Y)
+	 * @return an object containing info about your submission or submission failure
+	 * @author Timothy S Sabat
+	 */
 	public function entryPost($formIdentifier, $wufooSubmitFields) {
 		$url = $this->getFullUrl('forms/'.$formIdentifier.'/entries');
 		$postParams = array();
@@ -195,10 +210,37 @@ class WufooApiWrapper extends WufooApiWrapperBase {
 		return new PostResponse($response);
 	}
 	
-	public function login($email, $password, $integrationKey, $subdomain = '') {
-		$args = implode(func_get_args(), '&');
+	/**
+	 * returns an API key for a given email, password,
+	 *
+	 * @param string $email 
+	 * @param string $password 
+	 * @param string $subdomain 
+	 * @return void
+	 * @author Timothy S Sabat
+	 */
+	public function getLogin($email, $password, $integrationKey, $subdomain = '') {
+		$args = array('email' => $email, 'password' => $password, 'integrationKey' => $integrationKey, 'subdomain' => $subdomain);
 		$url = 'http://wufoo.com/api/v3/login/';
-		
+		$response = $curl->postAuthenticated($args, $url, null);
+		return new PostResponse($response);
+	}
+	
+	
+	public function webHookPut($formIdentifier, $webHookUrl, $handshakeKey, $metadata = false) {
+		$url = $this->getFullUrl('forms/'.$formIdentifier.'/webhooks');
+		String::debugShout(__LINE__, __FILE__, array($url)); 
+		$this->curl = new WufooCurl();
+		$args = array('url' => $webHookUrl, 'handshakeKey' => $handshakeKey, 'metadata' => $metadata);
+		$result = json_decode($this->curl->putAuthenticated($args, $url, $this->apiKey));
+		return new WebHookResponse($result->WebHookPutResult->Hash);
+	}
+	
+	public function webHookDelete($formIdentifier, $hash) {
+		$url = $this->getFullUrl('forms/'.$formIdentifier.'/webhooks');
+		$this->curl = new WufooCurl();
+		$result = json_decode($this->curl->deleteAuthenticated(array('hash' => $hash), $url, $this->apiKey));
+		return new WebHookResponse($result->WebHookDeleteResult->Hash);
 	}
 }
 

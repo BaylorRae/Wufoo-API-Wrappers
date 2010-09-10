@@ -5,7 +5,7 @@ class ValueObject {
 	public function __construct($obj) {
 		if ($obj) {
 			foreach ($obj as $key => $value) {
-				$this->setProperty($key, $value, $obj->ID);
+				$this->setProperty($key, $value, (isset($obj->ID) ? $obj->ID : ''));
 			}
 		}
 	}
@@ -232,6 +232,15 @@ class PostResponse {
 		}
 	}
 }
+
+class WebHookResponse {
+	public $Hash;
+	
+	public function __construct($hash) {
+		$this->Hash = $hash;
+	}
+}
+
 
 
 ?>

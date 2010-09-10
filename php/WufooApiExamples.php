@@ -73,6 +73,19 @@ class WufooApiExamples {
 		$wrapper = new WufooApiWrapper($this->apiKey, $this->subdomain, $this->domain);
 		return $wrapper->getComments($identifier);
 	}
+	
+	public function entryPost($identifier, $postArray = '') {
+		$wrapper = new WufooApiWrapper($this->apiKey, $this->subdomain, $this->domain);
+		if (!$postArray) {
+			$postArray = array('Field1' => 'Booyah!');
+		}
+		return $wrapper->entryPost($identifier, $postArray);	
+	}
+	
+	public function webHookPut($identifier, $urlToAdd, $handshakeKey, $metadata = false) {
+		$wrapper = new WufooApiWrapper($this->apiKey, $this->subdomain, $this->domain);
+		return $wrapper->webHookPut($identifier, $urlToAdd, $handshakeKey, $metadata = false);
+	}
 
 }
 

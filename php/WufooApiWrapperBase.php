@@ -62,6 +62,43 @@ class WufooCurl {
 		return $response;
 	}
 	
+	//http://stackoverflow.com/questions/2081894/handling-put-delete-arguments-in-php
+	public function putAuthenticated($postParams, $url, $apiKey) {
+		$this->curl = curl_init($url); 
+		$this->setBasicCurlOptions();
+		
+		curl_setopt($this->curl, CURLOPT_HTTPHEADER, array('Content-type: multipart/form-data', 'Expect:'));
+		curl_setopt($this->curl, CURLOPT_CUSTOMREQUEST, 'PUT');
+		curl_setopt($this->curl, CURLOPT_POSTFIELDS, http_build_query($postParams));		
+		curl_setopt($this->curl, CURLOPT_USERPWD, $apiKey.':footastical');
+
+		$response = curl_exec($this->curl);
+		$this->setResultCodes();
+		$this->checkForCurlErrors();
+		$this->checkForPutErrors($response);
+		curl_close($this->curl);
+		return $response;
+	}
+	
+	//http://stackoverflow.com/questions/2081894/handling-put-delete-arguments-in-php
+	public function deleteAuthenticated($postParams, $url, $apiKey) {
+		$this->curl = curl_init($url); 
+		$this->setBasicCurlOptions();
+		
+		curl_setopt($this->curl, CURLOPT_HTTPHEADER, array('Content-type: multipart/form-data', 'Expect:'));
+		curl_setopt($this->curl, CURLOPT_CUSTOMREQUEST, 'DELETE');
+		curl_setopt($this->curl, CURLOPT_POSTFIELDS, http_build_query($postParams));		
+		curl_setopt($this->curl, CURLOPT_USERPWD, $apiKey.':footastical');
+
+		$response = curl_exec($this->curl);
+		$this->setResultCodes();
+		$this->checkForCurlErrors();
+		//GET and DELETE both expect 200 response for success
+		$this->checkForGetErrors($response);
+		curl_close($this->curl);
+		return $response;
+	}
+	
 	public function setBasicCurlOptions() {
 		//http://bugs.php.net/bug.php?id=47030
 		curl_setopt($this->curl, CURLOPT_SSL_VERIFYHOST, false);
@@ -86,6 +123,20 @@ class WufooCurl {
 	private function checkForGetErrors($response) {
 		switch ($this->ResultStatus['http_code']) {
 			case 200:
+				//ignore, this is good.
+				break;
+			case 401:
+				throw new WufooException('(401) Forbidden.  Check your API key.', 401);
+				break;
+			default:
+				$this->throwResponseError($response);
+				break;
+		}
+	}
+	
+	private function checkForPutErrors($response) {
+		switch ($this->ResultStatus['http_code']) {
+			case 201:
 				//ignore, this is good.
 				break;
 			case 401:
