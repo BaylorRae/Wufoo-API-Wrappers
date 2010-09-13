@@ -115,6 +115,27 @@ class WufooApiWrapper extends WufooApiWrapperBase {
 		return $countObject->EntryCount;
 	} 
 	
+    /**
+    * Gets the entry count for a specific day.
+    *  
+    *
+    * @param string $identifier a URL or Hash
+    * @return int today's entry count
+    * @author Baylor Rae'
+    */
+  public function getEntryCountToday($identifier) {
+    $url = $this->getFullUrl($from.'/'.$identifier) . '?includeTodayCount=true';
+    $this->curl = new WufooCurl();
+    $countObject = json_decode($this->curl->getAuthenticated($url, $this->apiKey));
+    
+    if( isset($countObject->EntryCountToday) )
+      return $countObject->EntryCountToday;
+    elseif( isset($countObject->Forms[0]->EntryCountToday) )
+      return $countObject->Forms[0]->EntryCountToday;
+    else
+      return 0;
+  }
+	
 	/**
 	 * Gets all reports permitted to user.
 	 *
