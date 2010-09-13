@@ -94,7 +94,7 @@ class WufooApiWrapper extends WufooApiWrapperBase {
 	 */
 	public function getEntries($identifier, $from = 'forms', $getArgs = '', $index = 'EntryId') {
 		$url = $this->getFullUrl($from.'/'.$identifier.'/entries');
-		$url.= ($getArgs) ? '?'.$getArgs : '';
+		$url.= ($getArgs) ? '?'. ltrim($getArgs, '?') : '';
 		return $this->getHelper($url, 'Entry', 'Entries', $index);
 	}
 	
@@ -109,7 +109,7 @@ class WufooApiWrapper extends WufooApiWrapperBase {
 	 */
 	public function getEntryCount($identifier, $from = 'forms', $getArgs = '') {
 		$url = $this->getFullUrl($from.'/'.$identifier.'/entries/count');
-		$url.= ($getArgs) ? '?'.$getArgs : '';
+		$url.= ($getArgs) ? '?'. ltrim($getArgs, '?') : '';
 		$this->curl = new WufooCurl();
 		$countObject = json_decode($this->curl->getAuthenticated($url, $this->apiKey));
 		return $countObject->EntryCount;
